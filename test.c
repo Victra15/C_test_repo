@@ -6,7 +6,7 @@
 /*   By: yolee <yolee@student.42seoul.kr>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/09 15:57:57 by yolee             #+#    #+#             */
-/*   Updated: 2022/09/09 19:50:59 by yolee            ###   ########.fr       */
+/*   Updated: 2022/09/09 20:25:05 by yolee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,9 +35,9 @@ int	main(int argc, char **argv)
 	{
 		file_fd = open("temp.txt", O_RDONLY);
 		printf("%d, %d\n", pipefd_A[PIPE_IN], pipefd_A[PIPE_OUT]);
-		close(pipefd_A[PIPE_OUT]);
+		close(pipefd_B[PIPE_OUT]);
 		dup2(file_fd, STDIN_FILENO);
-		dup2(pipefd_A[PIPE_IN], STDOUT_FILENO);
+		dup2(pipefd_B[PIPE_IN], STDOUT_FILENO);
 		execve("/bin/cat", argv, NULL);
 		exit(EXIT_SUCCESS);
 	}
@@ -45,13 +45,38 @@ int	main(int argc, char **argv)
 	c_pid = fork();
 	if (c_pid == 0)
 	{
+		close(pipefd_B[PIPE_IN]);
+		close(pipefd_A[PIPE_OUT]);
 		printf("%d, %d\n", pipefd_B[PIPE_IN], pipefd_B[PIPE_OUT]);
-		close(pipefd_A[PIPE_IN]);
-		dup2(pipefd_A[PIPE_OUT], STDIN_FILENO);
+		dup2(pipefd_B[PIPE_OUT], STDIN_FILENO);
+		// dup2(pipefd_A[PIPE_IN], STDOUT_FILENO);
 		execve("/bin/cat", argv, NULL);
 		exit(EXIT_SUCCESS);
 	}
-	execve("/bin/cat", argv, NULL);
+	waitpid(c_pid, &exit_status, WUNTRACED);
+	c_pid = fork();
+	if (c_pid == 0)
+	{
+		close(pipefd_A[PIPE_IN]);
+		close(pipefd_B[PIPE_OUT]);
+		printf("%d, %d\n", pipefd_A[PIPE_IN], pipefd_A[PIPE_OUT]);
+		// dup2(pipefd_A[PIPE_OUT], STDIN_FILENO);
+		// dup2(pipefd_B[PIPE_IN], STDOUT_FILENO);
+		execve("/bin/cat", argv, NULL);
+		exit(EXIT_SUCCESS);
+	}
+	// waitpid(c_pid, &exit_status, WUNTRACED);
+	// c_pid = fork();
+	// if (c_pid == 0)
+	// {
+	// 	close(pipefd_A[PIPE_OUT]);
+	// 	printf("%d, %d\n", pipefd_B[PIPE_IN], pipefd_B[PIPE_OUT]);
+	// 	close(pipefd_A[PIPE_IN]);
+	// 	dup2(pipefd_A[PIPE_OUT], STDIN_FILENO);
+	// 	execve("/bin/cat", argv, NULL);
+	// 	exit(EXIT_SUCCESS);
+	// }
+	// execve("/bin/cat", argv, NULL);
 	return (0);
 }
 
