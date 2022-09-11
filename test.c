@@ -6,7 +6,7 @@
 /*   By: yolee <yolee@student.42seoul.kr>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/09 15:57:57 by yolee             #+#    #+#             */
-/*   Updated: 2022/09/09 20:25:05 by yolee            ###   ########.fr       */
+/*   Updated: 2022/09/10 11:35:54 by yolee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,105 +15,75 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
-#define PIPE_OUT 0
-#define PIPE_IN 1
+#define PIPE_RD 0
+#define PIPE_WR 1
 
 int	main(int argc, char **argv)
 {
 	int		exit_status;
 	int		file_fd;
-	int		pipefd_A[2];
-	int		pipefd_B[2];
+	int		pipefd[2];
+	int		pipefd_1[2];
 	pid_t	c_pid;
 
 	(void)argc;
 	exit_status = 0;
-	pipe(pipefd_A);
-	pipe(pipefd_B);
+	pipe(pipefd);
 	c_pid = fork();
 	if (c_pid == 0)
 	{
+		close(pipefd[PIPE_RD]);
 		file_fd = open("temp.txt", O_RDONLY);
-		printf("%d, %d\n", pipefd_A[PIPE_IN], pipefd_A[PIPE_OUT]);
-		close(pipefd_B[PIPE_OUT]);
 		dup2(file_fd, STDIN_FILENO);
-		dup2(pipefd_B[PIPE_IN], STDOUT_FILENO);
+		dup2(pipefd[PIPE_WR], STDOUT_FILENO);
 		execve("/bin/cat", argv, NULL);
 		exit(EXIT_SUCCESS);
 	}
 	waitpid(c_pid, &exit_status, WUNTRACED);
+	pipe(pipefd_1);
 	c_pid = fork();
 	if (c_pid == 0)
 	{
-		close(pipefd_B[PIPE_IN]);
-		close(pipefd_A[PIPE_OUT]);
-		printf("%d, %d\n", pipefd_B[PIPE_IN], pipefd_B[PIPE_OUT]);
-		dup2(pipefd_B[PIPE_OUT], STDIN_FILENO);
-		// dup2(pipefd_A[PIPE_IN], STDOUT_FILENO);
+		close(pipefd[PIPE_WR]);
+		close(pipefd_1[PIPE_RD]);
+		dup2(pipefd[PIPE_RD], STDIN_FILENO);
+		dup2(pipefd_1[PIPE_WR], STDOUT_FILENO);
 		execve("/bin/cat", argv, NULL);
 		exit(EXIT_SUCCESS);
+	}
+	else
+		close(pipefd[PIPE_WR]);
+	waitpid(c_pid, &exit_status, WUNTRACED);
+	close(pipefd[PIPE_RD]);
+	pipe(pipefd);
+	c_pid = fork();
+	if (c_pid == 0)
+	{
+		close(pipefd_1[PIPE_WR]);
+		close(pipefd[PIPE_RD]);
+		dup2(pipefd_1[PIPE_RD], STDIN_FILENO);
+		dup2(pipefd[PIPE_WR], STDOUT_FILENO);
+		execve("/bin/cat", argv, NULL);
+		exit(EXIT_SUCCESS);
+	}
+	else
+	{
+		close(pipefd_1[PIPE_WR]);
 	}
 	waitpid(c_pid, &exit_status, WUNTRACED);
+	pipe(pipefd_1);
 	c_pid = fork();
 	if (c_pid == 0)
 	{
-		close(pipefd_A[PIPE_IN]);
-		close(pipefd_B[PIPE_OUT]);
-		printf("%d, %d\n", pipefd_A[PIPE_IN], pipefd_A[PIPE_OUT]);
-		// dup2(pipefd_A[PIPE_OUT], STDIN_FILENO);
-		// dup2(pipefd_B[PIPE_IN], STDOUT_FILENO);
+		close(pipefd[PIPE_WR]);
+		dup2(pipefd[PIPE_RD], STDIN_FILENO);
 		execve("/bin/cat", argv, NULL);
 		exit(EXIT_SUCCESS);
 	}
-	// waitpid(c_pid, &exit_status, WUNTRACED);
-	// c_pid = fork();
-	// if (c_pid == 0)
-	// {
-	// 	close(pipefd_A[PIPE_OUT]);
-	// 	printf("%d, %d\n", pipefd_B[PIPE_IN], pipefd_B[PIPE_OUT]);
-	// 	close(pipefd_A[PIPE_IN]);
-	// 	dup2(pipefd_A[PIPE_OUT], STDIN_FILENO);
-	// 	execve("/bin/cat", argv, NULL);
-	// 	exit(EXIT_SUCCESS);
-	// }
-	// execve("/bin/cat", argv, NULL);
+	else
+	{
+		close(pipefd[PIPE_WR]);
+	}
+	waitpid(c_pid, &exit_status, WUNTRACED);
 	return (0);
 }
-
-// int	g_num;
-
-// int	main()
-// {
-// 	int		exit_status;
-// 	pid_t	c_pid;
-
-// 	g_num = 0;
-// 	exit_status = 0;
-// 	c_pid = fork();
-// 	if (c_pid == 0)
-// 	{
-// 		g_num = 5;
-// 		printf("%d\n", g_num);
-// 		exit(EXIT_SUCCESS);
-// 	}
-// 	g_num = 1;
-// 	waitpid(c_pid, &exit_status, WUNTRACED);
-// 	c_pid = fork();
-// 	if (c_pid == 0)
-// 	{
-// 		g_num = 10;
-// 		printf("%d\n", g_num);
-// 		exit(EXIT_SUCCESS);
-// 	}
-// 	waitpid(c_pid, &exit_status, WUNTRACED);
-// 	printf("%d\n", g_num);
-// 	return (0);
-// }
-
-// int	main()
-// {
-// 	int fd;
-
-// 	fd = open("a.txt", O_RDWR);
-// 	printf("%d\n", fd);
-// }
