@@ -6,7 +6,7 @@
 /*   By: yolee <yolee@student.42seoul.kr>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/09 15:57:57 by yolee             #+#    #+#             */
-/*   Updated: 2022/09/16 03:59:29 by yolee            ###   ########.fr       */
+/*   Updated: 2022/09/16 05:55:34 by yolee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,7 @@ int	main(int argc, char **argv)
 	(void)argc;
 	(void)argv;
 	errcode = stat(argv[1], &buf);
-	printf("%d %d\n", errcode, S_ISDIR(buf.st_mode));
+	// printf("%d %d\n", errcode, S_ISDIR(buf.st_mode));
+	system("$?");
 	return (0);
 }
