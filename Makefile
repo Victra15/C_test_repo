@@ -2,16 +2,19 @@ NAME = test
 
 CC = cc
 CFLAGS = -Wall -Werror -Wextra -g
-SRCS = test.c
+LIBFTFLAGS = -Llibft -lft
+SRCS = test.c \
+
 OBJS = $(SRCS:.c=.o)
 
 all : $(NAME)
 
 $(NAME) : $(OBJS)
-	$(CC) $(CFLAGS) $(OBJS) -o $(NAME)
+	$(MAKE) bonus -C ./libft
+	$(CC) $(CFLAGS) $(OBJS) $(LIBFTFLAGS) -o $(NAME)
 
 .c.o :
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -Ilibft -c $< -o $@
 
 clean :
 	$(RM) $(OBJS)

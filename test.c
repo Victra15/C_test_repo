@@ -6,7 +6,7 @@
 /*   By: yolee <yolee@student.42seoul.kr>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/09 15:57:57 by yolee             #+#    #+#             */
-/*   Updated: 2022/09/16 07:57:01 by yolee            ###   ########.fr       */
+/*   Updated: 2022/10/26 22:18:21 by yolee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,118 +14,96 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <math.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include "libft.h"
 #define PIPE_RD 0
 #define PIPE_WR 1
 
-int	main(void)
+static int	ft_isspace(const char chr)
 {
-	int	fd;
+	if ((chr >= '\t' && chr <= '\r')
+		|| chr == ' ')
+		return (1);
+	else
+		return (0);
+}
 
-	fd = open("temp.txt", O_WRONLY | O_CREAT | O_APPEND, 0644);
-	printf("%d\n", fd);
-	close(fd);
-	return (0);
+static int	ft_issign(const char chr)
+{
+	if (chr == '+' || chr == '-')
+		return (1);
+	else
+		return (0);
+}
+
+static int	ft_isoverflowed(double *conv_num, const int sign)
+{
+	if (((*conv_num) * (double)sign) < 0)
+	{
+		if (sign < 0)
+			(*conv_num) = 0.0;
+		else
+			(*conv_num) = -1.0;
+		return (1);
+	}
+	else
+		return (0);
+}
+
+static double	getnum(const char **iter_ptr, int sign, int *cnt)
+{
+	double	conv_num;
+
+	(*cnt) = 0;
+	conv_num = 0.0;
+	while (ft_isdigit(**iter_ptr))
+	{
+		conv_num = (conv_num * 10.0) + (double)((sign) * ((**iter_ptr) - '0'));
+		if (ft_isoverflowed(&conv_num, sign))
+			break ;
+		(*iter_ptr)++;
+		(*cnt)++;
+	}
+	return (conv_num);
+}
+
+double	ft_atof(const char *str)
+{
+	double		conv_num;
+	int			sign;
+	const char	*iter_ptr;
+	int			cnt;
+
+	sign = 1;
+	conv_num = 0;
+	iter_ptr = str;
+	while (ft_isspace(*iter_ptr))
+		iter_ptr++;
+	if (ft_issign(*iter_ptr))
+	{
+		if ((*iter_ptr) == '-')
+			sign = -1;
+		iter_ptr++;
+	}
+	conv_num = getnum(&iter_ptr, sign, &cnt);
+	if (*iter_ptr == '.' && ft_isdigit(*(iter_ptr + 1)) && iter_ptr++)
+		conv_num += getnum(&iter_ptr, sign, &cnt) / pow(10.0, (double)cnt);
+	else if (*iter_ptr != '\0')
+		write(2, "error\n", 6);
+	if (*iter_ptr != '\0')
+		write(2, "error\n", 6);
+	return ((conv_num));
 }
 
 
-// void	ms_execute_cmd(t_cmd *cmd)
-// {
-// 	pid_t	c_pid;
-
-// 	if (cmd->next)
-// 		ms_init_pipe(cmd->index);
-// 	c_pid = fork();
-// 	if (c_pid == 0)
-// 		ms_child_proc_act(cmd);
-// 	else
-// 		ms_close_pipe(cmd);
-// 	waitpid(c_pid, &g_config.exit_status, WUNTRACED);
-// }
-
-// void	ms_init_pipe(int cmd_idx)
-// {
-// 	int	init_flag;
-
-// 	init_flag = cmd_idx % 2;
-// 	pipe(g_config.pipefd[init_flag]);
-// }
-
-// void	ms_close_pipe(t_cmd *cmd)
-// {
-// 	if (cmd->index % 2)
-// 	{
-// 		if (cmd->next)
-// 			close(g_config.pipefd[0][FD_WR]);
-// 		if (cmd->index != 0)
-// 			close(g_config.pipefd[1][FD_RD]);
-// 	}
-// 	else
-// 	{
-// 		if (cmd->next)
-// 			close(g_config.pipefd[1][FD_WR]);
-// 		close(g_config.pipefd[0][FD_RD]);
-// 	}
-// }
-
-// void	connect_pipe(t_cmd *cmd, int *in_fd, int *out_fd)
-// {
-// 	if (cmd->index % 2)
-// 	{
-// 		if (cmd->next)
-// 			(*out_fd) = g_config.pipefd[0][FD_WR];
-// 		if (cmd->index != 0)
-// 			(*in_fd) = g_config.pipefd[1][FD_RD];
-// 	}
-// 	else
-// 	{
-// 		if (cmd->next)
-// 			(*out_fd) = g_config.pipefd[1][FD_WR];
-// 		(*in_fd) = g_config.pipefd[0][FD_RD];
-// 	}
-// }
-
-// int		heredoc
-
-
-// int		ms_open_infile(t_file *file)
-// {
-
-// }
-
-// int		ms_open_outfile(t_file *file)
-// {
-// 	int			fd;
-// 	struct stat	buf;
-
-// 	while (1)
-// 	{
-// 		if (file->mode == APPEND_MODE)
-// 			fd = open(fd, O_CREAT | O_WRONLY | O_APPEND, 0644);
-// 		else
-// 			fd = open(fd, O_CREAT | O_WRONLY | O_TRUNC, 0644);
-// 		if (!file && file->next)
-// 			break ;
-// 		close(fd);
-// 	}
-// }
-
-
-// void	ms_child_proc_act(t_cmd *cmd)
-// {
-// 	int	in_fd;
-// 	int	out_fd;
-
-// 	in_fd = 0;
-// 	out_fd = 0;
-// 	connect_pipe(&in_fd, &out_fd);
-// 	if (cmd->infile)
-// 		in_fd = ms_open_infile(cmd->infile);
-// 	if (cmd->outfile)
-// 		out_fd = ms_open_outfile(cmd->outfile);
-// 	dup2(out_fd, STDOUT_FILENO);
-// 	dup2(in_fd, STDIN_FILENO);
-// 	ms_execute(cmd->cmd);
-// 	exit(EXIT_SUCCESS);
-// }
+int	main(int argc, char **argv)
+{
+	double	lf;
+	(void)argc;
+	lf = ft_atof(argv[1]);
+	printf("%.15lf\n", lf);
+	printf("%.15lf\n", 1.123123871827381728);
+	return (0);
+}
